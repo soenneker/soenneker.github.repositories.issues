@@ -8,6 +8,7 @@ using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.Repositories.Abstract;
 using Soenneker.GitHub.Client.Abstract;
+using Soenneker.Extensions.Enumerable;
 
 namespace Soenneker.GitHub.Repositories.Issues;
 
@@ -25,17 +26,22 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         _gitHubClientUtil = gitHubClientUtil;
     }
 
-    public async ValueTask<List<Issue>> GetAllIssuesForAllRepositories(string owner, CancellationToken cancellationToken = default)
+    public async ValueTask<IReadOnlyList<Issue>?> GetAllIssuesForRepository(string owner, string name, CancellationToken cancellationToken = default)
     {
         GitHubClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
+        return await client.Issue.GetAllForRepository(owner, name).NoSync();
+    }
 
+    public async ValueTask<List<Issue>> GetAllIssuesForAllRepositories(string owner, CancellationToken cancellationToken = default)
+    {
         List<Issue> result = [];
 
         foreach (Repository repo in await _gitHubRepositoriesUtil.GetAllForOwner(owner, cancellationToken).NoSync())
         {
-            IReadOnlyList<Issue>? issues = await client.Issue.GetAllForRepository(owner, repo.Name).NoSync();
+            IReadOnlyList<Issue>? issues = await GetAllIssuesForRepository(owner, repo.Name, cancellationToken).NoSync();
 
-            result.AddRange(issues);
+            if (issues.Populated())
+                result.AddRange(issues);
         }
 
         return result;

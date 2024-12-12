@@ -10,6 +10,8 @@ namespace Soenneker.GitHub.Repositories.Issues.Abstract;
 /// </summary>
 public interface IGitHubRepositoriesIssuesUtil
 {
+    ValueTask<IReadOnlyList<Issue>?> GetAllIssuesForRepository(string owner, string name, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Retrieves all issues for all repositories owned by the specified owner.
     /// </summary>
