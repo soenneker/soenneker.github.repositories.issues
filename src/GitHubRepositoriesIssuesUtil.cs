@@ -26,19 +26,19 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         _gitHubClientUtil = gitHubClientUtil;
     }
 
-    public async ValueTask<IReadOnlyList<Issue>?> GetAllIssuesForRepository(string owner, string name, CancellationToken cancellationToken = default)
+    public async ValueTask<IReadOnlyList<Issue>?> GetAll(string owner, string name, CancellationToken cancellationToken = default)
     {
         GitHubClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
         return await client.Issue.GetAllForRepository(owner, name).NoSync();
     }
 
-    public async ValueTask<List<Issue>> GetAllIssuesForAllRepositories(string owner, CancellationToken cancellationToken = default)
+    public async ValueTask<List<Issue>> GetAllForOwner(string owner, CancellationToken cancellationToken = default)
     {
         List<Issue> result = [];
 
         foreach (Repository repo in await _gitHubRepositoriesUtil.GetAllForOwner(owner, cancellationToken).NoSync())
         {
-            IReadOnlyList<Issue>? issues = await GetAllIssuesForRepository(owner, repo.Name, cancellationToken).NoSync();
+            IReadOnlyList<Issue>? issues = await GetAll(owner, repo.Name, cancellationToken).NoSync();
 
             if (issues.Populated())
                 result.AddRange(issues);
@@ -47,9 +47,30 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         return result;
     }
 
-    public async ValueTask LogAllIssuesForAllRepositories(string owner, bool includeDependencyIssues = false, CancellationToken cancellationToken = default)
+    public async ValueTask LogAll(string owner, string name, bool includeDependencyIssues = false, CancellationToken cancellationToken = default)
     {
-        List<Issue> issues = await GetAllIssuesForAllRepositories(owner, cancellationToken).NoSync();
+        IReadOnlyList<Issue>? issues = await GetAll(owner, name, cancellationToken).NoSync();
+
+        if (!issues.Populated())
+            return;
+
+        foreach (Issue issue in issues)
+        {
+            if (includeDependencyIssues)
+            {
+                _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", issue.Repository.Name, issue.Title, issue.UpdatedAt);
+            }
+            else
+            {
+                if (!issue.Title.Contains("Update dependency"))
+                    _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", issue.Repository.Name, issue.Title, issue.UpdatedAt);
+            }
+        }
+    }
+
+    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = false, CancellationToken cancellationToken = default)
+    {
+        List<Issue> issues = await GetAllForOwner(owner, cancellationToken).NoSync();
 
         foreach (Issue issue in issues)
         {
