@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Soenneker.GitHub.Repositories.Issues.Abstract;
 using Soenneker.Tests.FixturedUnit;
 using Xunit;
-using Xunit.Abstractions;
+
 
 namespace Soenneker.GitHub.Repositories.Issues.Tests;
 
