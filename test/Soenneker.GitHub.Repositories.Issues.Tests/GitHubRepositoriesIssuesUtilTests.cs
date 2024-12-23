@@ -1,9 +1,6 @@
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Soenneker.GitHub.Repositories.Issues.Abstract;
 using Soenneker.Tests.FixturedUnit;
 using Xunit;
-
 
 namespace Soenneker.GitHub.Repositories.Issues.Tests;
 
@@ -15,5 +12,11 @@ public class GitHubRepositoriesIssuesUtilTests : FixturedUnitTest
     public GitHubRepositoriesIssuesUtilTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
     {
         _util = Resolve<IGitHubRepositoriesIssuesUtil>(true);
+    }
+
+    [Fact]
+    public void Default()
+    {
+
     }
 }
