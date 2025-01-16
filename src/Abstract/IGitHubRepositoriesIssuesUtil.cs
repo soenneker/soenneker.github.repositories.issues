@@ -20,7 +20,7 @@ public interface IGitHubRepositoriesIssuesUtil
     /// <returns>
     /// A <see cref="ValueTask{TResult}"/> containing a list of issues for the specified repository, or <c>null</c> if no issues are found or the operation is canceled.
     /// </returns>
-    ValueTask<IReadOnlyList<Issue>?> GetAll(string owner, string name, CancellationToken cancellationToken = default);
+    ValueTask<IReadOnlyList<Issue>> GetAll(string owner, string name, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves all issues for all repositories owned by the specified owner.
@@ -30,7 +30,7 @@ public interface IGitHubRepositoriesIssuesUtil
     /// <returns>
     /// A <see cref="ValueTask{TResult}"/> containing a list of issues for all repositories, or <c>null</c> if no issues are found or the operation is canceled.
     /// </returns>
-    ValueTask<List<Issue>> GetAllForOwner(string owner, CancellationToken cancellationToken = default);
+    ValueTask<List<Issue>?> GetAllForOwner(string owner, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Logs all issues for a specific repository owned by the specified owner.
