@@ -26,7 +26,7 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         _gitHubClientUtil = gitHubClientUtil;
     }
 
-    public async ValueTask<IReadOnlyList<Issue>> GetAll(string owner, string name, CancellationToken cancellationToken = default)
+    public async ValueTask<IReadOnlyList<Issue>> GetAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
     {
         GitHubClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
 
@@ -44,14 +44,27 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
             };
 
             issues = await client.Issue.GetAllForRepository(owner, name, options).NoSync();
-            allIssues.AddRange(issues);
+
+            foreach (Issue issue in issues)
+            {
+                if (includeDependencyIssues)
+                {
+                    allIssues.Add(issue);
+                }
+                else
+                {
+                    if (!issue.Title.Contains("Update dependency")) // renovate, dependabot needs help
+                        allIssues.Add(issue);
+                }
+            }
+
             page++;
         } while (issues.Count > 0 && !cancellationToken.IsCancellationRequested);
 
         return allIssues;
     }
 
-    public async ValueTask<List<Issue>?> GetAllForOwner(string owner, CancellationToken cancellationToken = default)
+    public async ValueTask<List<Issue>?> GetAllForOwner(string owner, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<Repository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, cancellationToken).NoSync();
 
@@ -62,7 +75,7 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
         foreach (Repository repo in repositories)
         {
-            IReadOnlyList<Issue> issues = await GetAll(owner, repo.Name, cancellationToken).NoSync();
+            IReadOnlyList<Issue> issues = await GetAll(owner, repo.Name, includeDependencyIssues, cancellationToken).NoSync();
 
             if (issues.Populated())
             {
@@ -74,28 +87,20 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         return result;
     }
 
-    public async ValueTask LogAll(string owner, string name, bool includeDependencyIssues = false, CancellationToken cancellationToken = default)
+    public async ValueTask LogAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Issue> issues = await GetAll(owner, name, cancellationToken).NoSync();
+        IReadOnlyList<Issue> issues = await GetAll(owner, name, includeDependencyIssues, cancellationToken).NoSync();
 
         if (issues.IsNullOrEmpty())
             return;
 
         foreach (Issue issue in issues)
         {
-            if (includeDependencyIssues)
-            {
-                _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", name, issue.Title, issue.UpdatedAt);
-            }
-            else
-            {
-                if (!issue.Title.Contains("Update dependency"))
-                    _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", name, issue.Title, issue.UpdatedAt);
-            }
+            _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", name, issue.Title, issue.UpdatedAt);
         }
     }
 
-    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = false, CancellationToken cancellationToken = default)
+    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
     {
         IReadOnlyList<Repository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, cancellationToken).NoSync();
 
@@ -104,22 +109,14 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
         foreach (Repository repo in repositories)
         {
-            IReadOnlyList<Issue> issues = await GetAll(owner, repo.Name, cancellationToken).NoSync();
+            IReadOnlyList<Issue> issues = await GetAll(owner, repo.Name, includeDependencyIssues, cancellationToken).NoSync();
 
-            if (issues.Populated())
+            if (issues.IsNullOrEmpty())
+                continue;
+
+            foreach (Issue issue in issues)
             {
-                foreach (Issue issue in issues)
-                {
-                    if (includeDependencyIssues)
-                    {
-                        _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", repo.Name, issue.Title, issue.UpdatedAt);
-                    }
-                    else
-                    {
-                        if (!issue.Title.Contains("Update dependency"))
-                            _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", repo.Name, issue.Title, issue.UpdatedAt);
-                    }
-                }
+                _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", repo.Name, issue.Title, issue.UpdatedAt);
             }
         }
     }
