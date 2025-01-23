@@ -34,6 +34,8 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         var page = 1;
         IReadOnlyList<Issue> issues;
 
+        var repositoryIssueRequest = new RepositoryIssueRequest { State = ItemStateFilter.Open };
+
         do
         {
             var options = new ApiOptions
@@ -43,7 +45,7 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
                 StartPage = page
             };
 
-            issues = await client.Issue.GetAllForRepository(owner, name, options).NoSync();
+            issues = await client.Issue.GetAllForRepository(owner, name, repositoryIssueRequest, options).NoSync();
 
             foreach (Issue issue in issues)
             {
