@@ -9,6 +9,7 @@ using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.Repositories.Abstract;
 using Soenneker.GitHub.Client.Abstract;
 using Soenneker.Extensions.Enumerable;
+using System;
 
 namespace Soenneker.GitHub.Repositories.Issues;
 
@@ -66,9 +67,9 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         return allIssues;
     }
 
-    public async ValueTask<List<Issue>?> GetAllForOwner(string owner, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
+    public async ValueTask<List<Issue>?> GetAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Repository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, cancellationToken).NoSync();
+        IReadOnlyList<Repository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, null, endAt, cancellationToken).NoSync();
 
         if (repositories.Count == 0)
             return null;
@@ -102,9 +103,9 @@ public class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         }
     }
 
-    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
+    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
     {
-        IReadOnlyList<Repository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, cancellationToken).NoSync();
+        IReadOnlyList<Repository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, null, endAt, cancellationToken).NoSync();
 
         if (repositories.Count == 0)
             return;
