@@ -1,66 +1,53 @@
-using System.Threading.Tasks;
-using System.Threading;
-using Octokit;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Soenneker.GitHub.OpenApiClient.Models;
 
 namespace Soenneker.GitHub.Repositories.Issues.Abstract;
 
 /// <summary>
-/// A utility library for GitHub repository Issue related operations.
-/// Provides methods for retrieving and logging issues for repositories owned by a specified GitHub user or organization.
+/// Provides utility methods for accessing and logging GitHub repository issues.
 /// </summary>
 public interface IGitHubRepositoriesIssuesUtil
 {
     /// <summary>
-    /// Retrieves all issues for a specific repository owned by the specified owner.
+    /// Retrieves all open issues from the specified repository.
     /// </summary>
-    /// <param name="owner">The owner of the repository for which to retrieve issues.</param>
-    /// <param name="name">The name of the repository from which to retrieve issues.</param>
-    /// <param name="includeDependencyIssues"></param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A <see cref="ValueTask{TResult}"/> containing a list of issues for the specified repository, or <c>null</c> if no issues are found or the operation is canceled.
-    /// </returns>
-    ValueTask<IReadOnlyList<Issue>> GetAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default);
+    /// <param name="owner">The owner of the repository.</param>
+    /// <param name="name">The name of the repository.</param>
+    /// <param name="includeDependencyIssues">Whether to include dependency-related issues (e.g., Renovate).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A list of open issues.</returns>
+    ValueTask<List<Issue>> GetAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves all issues for all repositories owned by the specified owner.
+    /// Retrieves all open issues across all repositories owned by the specified user or organization.
     /// </summary>
-    /// <param name="owner">The owner of the repositories for which to retrieve issues.</param>
-    /// <param name="includeDependencyIssues"></param>
-    /// <param name="startAt"></param>
-    /// <param name="endAt"></param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>
-    /// A <see cref="ValueTask{TResult}"/> containing a list of issues for all repositories, or <c>null</c> if no issues are found or the operation is canceled.
-    /// </returns>
+    /// <param name="owner">The owner of the repositories.</param>
+    /// <param name="includeDependencyIssues">Whether to include dependency-related issues (e.g., Renovate).</param>
+    /// <param name="startAt">Optional filter to restrict to repositories created after this time.</param>
+    /// <param name="endAt">Optional filter to restrict to repositories created before this time.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A list of open issues across all repositories, or null if none found.</returns>
     ValueTask<List<Issue>?> GetAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Logs all issues for a specific repository owned by the specified owner.
+    /// Logs all open issues in the specified repository to the console or logging system.
     /// </summary>
-    /// <param name="owner">The owner of the repository for which to log issues.</param>
-    /// <param name="name">The name of the repository from which to log issues.</param>
-    /// <param name="includeDependencyIssues">
-    /// A boolean value indicating whether to include dependency-related issues in the log. 
-    /// Defaults to <c>true</c>.
-    /// </param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    /// <param name="owner">The owner of the repository.</param>
+    /// <param name="name">The name of the repository.</param>
+    /// <param name="includeDependencyIssues">Whether to include dependency-related issues (e.g., Renovate).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask LogAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Logs all issues for all repositories owned by the specified owner.
+    /// Logs all open issues for all repositories owned by the specified user or organization.
     /// </summary>
-    /// <param name="owner">The owner of the repositories for which to log issues.</param>
-    /// <param name="includeDependencyIssues">
-    /// A boolean value indicating whether to include dependency-related issues in the log. 
-    /// Defaults to <c>true</c>.
-    /// </param>
-    /// <param name="startAt"></param>
-    /// <param name="endAt"></param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="ValueTask"/> representing the asynchronous operation.</returns>
+    /// <param name="owner">The owner of the repositories.</param>
+    /// <param name="includeDependencyIssues">Whether to include dependency-related issues (e.g., Renovate).</param>
+    /// <param name="startAt">Optional filter to restrict to repositories created after this time.</param>
+    /// <param name="endAt">Optional filter to restrict to repositories created before this time.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default);
 }

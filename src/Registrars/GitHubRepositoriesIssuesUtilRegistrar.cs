@@ -15,8 +15,7 @@ public static class GitHubRepositoriesIssuesUtilRegistrar
     /// </summary>
     public static IServiceCollection AddGitHubRepositoriesIssuesUtilAsSingleton(this IServiceCollection services)
     {
-        services.AddGitHubRepositoriesUtilAsSingleton()
-                .TryAddSingleton<IGitHubRepositoriesIssuesUtil, GitHubRepositoriesIssuesUtil>();
+        services.AddGitHubRepositoriesUtilAsSingleton().TryAddSingleton<IGitHubRepositoriesIssuesUtil, GitHubRepositoriesIssuesUtil>();
 
         return services;
     }
@@ -26,8 +25,7 @@ public static class GitHubRepositoriesIssuesUtilRegistrar
     /// </summary>
     public static IServiceCollection AddGitHubRepositoriesIssuesUtilAsScoped(this IServiceCollection services)
     {
-        services.AddGitHubRepositoriesUtilAsScoped()
-                .TryAddScoped<IGitHubRepositoriesIssuesUtil, GitHubRepositoriesIssuesUtil>();
+        services.AddGitHubRepositoriesUtilAsScoped().TryAddScoped<IGitHubRepositoriesIssuesUtil, GitHubRepositoriesIssuesUtil>();
 
         return services;
     }
