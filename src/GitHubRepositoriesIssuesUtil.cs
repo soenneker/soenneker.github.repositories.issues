@@ -4,6 +4,7 @@ using Soenneker.Extensions.ValueTask;
 using Soenneker.GitHub.ClientUtil.Abstract;
 using Soenneker.GitHub.OpenApiClient;
 using Soenneker.GitHub.OpenApiClient.Models;
+using Soenneker.GitHub.Repositories.Abstract;
 using Soenneker.GitHub.Repositories.Issues.Abstract;
 using System;
 using System.Collections.Generic;
@@ -18,11 +19,14 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 {
     private readonly ILogger<GitHubRepositoriesIssuesUtil> _logger;
     private readonly IGitHubOpenApiClientUtil _gitHubClientUtil;
+    private readonly IGitHubRepositoriesUtil _gitHubRepositoriesUtil;
 
-    public GitHubRepositoriesIssuesUtil(ILogger<GitHubRepositoriesIssuesUtil> logger, IGitHubOpenApiClientUtil gitHubClientUtil)
+    public GitHubRepositoriesIssuesUtil(ILogger<GitHubRepositoriesIssuesUtil> logger, IGitHubOpenApiClientUtil gitHubClientUtil,
+        IGitHubRepositoriesUtil gitHubRepositoriesUtil)
     {
         _logger = logger;
         _gitHubClientUtil = gitHubClientUtil;
+        _gitHubRepositoriesUtil = gitHubRepositoriesUtil;
     }
 
     public async ValueTask<List<Issue>> GetAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
@@ -35,12 +39,14 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
         do
         {
-            List<Issue>? response = await client.Repos[owner][name].Issues.GetAsync(config =>
-            {
-                config.QueryParameters.State = "open";
-                config.QueryParameters.PerPage = 100;
-                config.QueryParameters.Page = page;
-            }, cancellationToken).NoSync();
+            List<Issue>? response = await client.Repos[owner][name]
+                                                .Issues.GetAsync(config =>
+                                                {
+                                                    config.QueryParameters.State = "open";
+                                                    config.QueryParameters.PerPage = 100;
+                                                    config.QueryParameters.Page = page;
+                                                }, cancellationToken)
+                                                .NoSync();
 
             issues = response?.ToList() ?? [];
 
@@ -63,11 +69,10 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         return allIssues;
     }
 
-    public async ValueTask<List<Issue>?> GetAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
+    public async ValueTask<List<Issue>?> GetAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null,
+        CancellationToken cancellationToken = default)
     {
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-        List<MinimalRepository>? response = await client.Users[owner].Repos.GetAsync(cancellationToken: cancellationToken).NoSync();
-        List<MinimalRepository> repositories = response?.ToList() ?? [];
+        List<MinimalRepository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
 
         if (!repositories.Any())
             return null;
@@ -78,11 +83,11 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         {
             List<Issue> issues = await GetAll(owner, repo.Name, includeDependencyIssues, cancellationToken).NoSync();
 
-            if (issues.Any())
-            {
-                result ??= [];
-                result.AddRange(issues);
-            }
+            if (issues.Count == 0)
+                continue;
+
+            result ??= [];
+            result.AddRange(issues);
         }
 
         return result;
@@ -101,11 +106,10 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         }
     }
 
-    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null, CancellationToken cancellationToken = default)
+    public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null,
+        CancellationToken cancellationToken = default)
     {
-        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
-        List<MinimalRepository>? response = await client.Users[owner].Repos.GetAsync(cancellationToken: cancellationToken).NoSync();
-        List<MinimalRepository> repositories = response?.ToList() ?? [];
+        List<MinimalRepository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
 
         if (!repositories.Any())
             return;
@@ -114,7 +118,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         {
             List<Issue> issues = await GetAll(owner, repo.Name, includeDependencyIssues, cancellationToken).NoSync();
 
-            if (!issues.Any())
+            if (issues.Count == 0)
                 continue;
 
             foreach (Issue issue in issues)
