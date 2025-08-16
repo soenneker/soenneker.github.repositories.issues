@@ -39,10 +39,10 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
         do
         {
-            List<Issue>? response = await client.Repos[owner][name]
+                                                            List<Issue>? response = await client.Repos[owner][name]
                                                 .Issues.GetAsync(config =>
                                                 {
-                                                    config.QueryParameters.State = "open";
+                                                    config.QueryParameters.State = Soenneker.GitHub.OpenApiClient.Repos.Item.Item.Issues.GetStateQueryParameterType.Open;
                                                     config.QueryParameters.PerPage = 100;
                                                     config.QueryParameters.Page = page;
                                                 }, cancellationToken)
