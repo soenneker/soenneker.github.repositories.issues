@@ -14,7 +14,7 @@
         <AssemblyName>Soenneker.GitHub.Repositories.Issues</AssemblyName>
         <PackageId>Soenneker.GitHub.Repositories.Issues</PackageId>
         <PackageTags>github repositories issues repository repo utilities util run issue githubrepositoriesissuesutil csharp dotnet c# .net</PackageTags>
-        <Copyright>Copyright © 2024-2025 Jake Soenneker</Copyright>
+        <Copyright>Copyright © 2024-2026 Jake Soenneker</Copyright>
         <Authors>Jake Soenneker</Authors>
         <Company>https://soenneker.com</Company>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
