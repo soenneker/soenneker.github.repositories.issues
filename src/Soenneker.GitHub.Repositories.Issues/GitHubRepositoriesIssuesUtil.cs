@@ -95,15 +95,34 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
     public async ValueTask LogAll(string owner, string name, bool includeDependencyIssues = true, CancellationToken cancellationToken = default)
     {
-        List<Issue> issues = await GetAll(owner, name, includeDependencyIssues, cancellationToken).NoSync();
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
 
-        if (!issues.Any())
-            return;
+        var page = 1;
+        List<Issue> issues;
 
-        foreach (Issue issue in issues)
+        do
         {
-            _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", name, issue.Title, issue.UpdatedAt);
-        }
+            List<Issue>? response = await client.Repos[owner][name]
+                .Issues.GetAsync(config =>
+                {
+                    config.QueryParameters.State = Soenneker.GitHub.OpenApiClient.Repos.Item.Item.Issues.GetStateQueryParameterType.Open;
+                    config.QueryParameters.PerPage = 100;
+                    config.QueryParameters.Page = page;
+                }, cancellationToken)
+                .NoSync();
+
+            issues = response?.ToList() ?? [];
+
+            foreach (Issue issue in issues)
+            {
+                if (includeDependencyIssues || !issue.Title.Contains("Update dependency"))
+                {
+                    _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", name, issue.Title, issue.UpdatedAt);
+                }
+            }
+
+            page++;
+        } while (issues.Count > 0 && !cancellationToken.IsCancellationRequested);
     }
 
     public async ValueTask LogAllForOwner(string owner, bool includeDependencyIssues = true, DateTime? startAt = null, DateTime? endAt = null,
@@ -114,17 +133,39 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
         if (!repositories.Any())
             return;
 
+        GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
+
         foreach (MinimalRepository repo in repositories)
         {
-            List<Issue> issues = await GetAll(owner, repo.Name, includeDependencyIssues, cancellationToken).NoSync();
-
-            if (issues.Count == 0)
+            if (string.IsNullOrEmpty(repo.Name))
                 continue;
 
-            foreach (Issue issue in issues)
+            var page = 1;
+            List<Issue> issues;
+
+            do
             {
-                _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", repo.Name, issue.Title, issue.UpdatedAt);
-            }
+                List<Issue>? response = await client.Repos[owner][repo.Name]
+                    .Issues.GetAsync(config =>
+                    {
+                        config.QueryParameters.State = Soenneker.GitHub.OpenApiClient.Repos.Item.Item.Issues.GetStateQueryParameterType.Open;
+                        config.QueryParameters.PerPage = 100;
+                        config.QueryParameters.Page = page;
+                    }, cancellationToken)
+                    .NoSync();
+
+                issues = response?.ToList() ?? [];
+
+                foreach (Issue issue in issues)
+                {
+                    if (includeDependencyIssues || !issue.Title.Contains("Update dependency"))
+                    {
+                        _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", repo.Name, issue.Title, issue.UpdatedAt);
+                    }
+                }
+
+                page++;
+            } while (issues.Count > 0 && !cancellationToken.IsCancellationRequested);
         }
     }
 }
