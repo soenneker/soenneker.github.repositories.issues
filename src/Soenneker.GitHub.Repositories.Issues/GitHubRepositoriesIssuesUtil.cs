@@ -14,7 +14,6 @@ using System.Threading.Tasks;
 
 namespace Soenneker.GitHub.Repositories.Issues;
 
-///<inheritdoc cref="IGitHubRepositoriesIssuesUtil"/>
 public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 {
     private readonly ILogger<GitHubRepositoriesIssuesUtil> _logger;
@@ -52,15 +51,8 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
             foreach (Issue issue in issues)
             {
-                if (includeDependencyIssues)
-                {
+                if (ShouldInclude(issue, includeDependencyIssues))
                     allIssues.Add(issue);
-                }
-                else
-                {
-                    if (!issue.Title.Contains("Update dependency"))
-                        allIssues.Add(issue);
-                }
             }
 
             page++;
@@ -81,7 +73,10 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
         foreach (MinimalRepository repo in repositories)
         {
-            List<Issue> issues = await GetAll(owner, repo.Name, includeDependencyIssues, cancellationToken).NoSync();
+            if (repo.Name is not { Length: > 0 } repoName)
+                continue;
+
+            List<Issue> issues = await GetAll(owner, repoName, includeDependencyIssues, cancellationToken).NoSync();
 
             if (issues.Count == 0)
                 continue;
@@ -115,7 +110,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
             foreach (Issue issue in issues)
             {
-                if (includeDependencyIssues || !issue.Title.Contains("Update dependency"))
+                if (ShouldInclude(issue, includeDependencyIssues))
                 {
                     _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", name, issue.Title, issue.UpdatedAt);
                 }
@@ -158,7 +153,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 
                 foreach (Issue issue in issues)
                 {
-                    if (includeDependencyIssues || !issue.Title.Contains("Update dependency"))
+                    if (ShouldInclude(issue, includeDependencyIssues))
                     {
                         _logger.LogInformation("{repo}: title: {title}, updated at: {opened}", repo.Name, issue.Title, issue.UpdatedAt);
                     }
@@ -167,5 +162,13 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
                 page++;
             } while (issues.Count > 0 && !cancellationToken.IsCancellationRequested);
         }
+    }
+
+    private static bool ShouldInclude(Issue issue, bool includeDependencyIssues)
+    {
+        if (issue.PullRequest != null)
+            return false;
+
+        return includeDependencyIssues || issue.Title?.Contains("Update dependency", StringComparison.OrdinalIgnoreCase) != true;
     }
 }
