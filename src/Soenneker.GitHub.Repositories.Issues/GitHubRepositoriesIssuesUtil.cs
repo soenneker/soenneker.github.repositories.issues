@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Soenneker.GitHub.Repositories.Issues;
 
+/// <inheritdoc cref="IGitHubRepositoriesIssuesUtil" />
 public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
 {
     private readonly ILogger<GitHubRepositoriesIssuesUtil> _logger;
