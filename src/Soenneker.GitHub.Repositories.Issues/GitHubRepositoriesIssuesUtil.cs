@@ -8,7 +8,6 @@ using Soenneker.GitHub.Repositories.Abstract;
 using Soenneker.GitHub.Repositories.Issues.Abstract;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -48,7 +47,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
                                                 }, cancellationToken)
                                                 .NoSync();
 
-            issues = response?.ToList() ?? [];
+            issues = response ?? [];
 
             foreach (Issue issue in issues)
             {
@@ -67,7 +66,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
     {
         List<MinimalRepository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
 
-        if (!repositories.Any())
+        if (repositories.Count == 0)
             return null;
 
         List<Issue>? result = null;
@@ -107,7 +106,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
                 }, cancellationToken)
                 .NoSync();
 
-            issues = response?.ToList() ?? [];
+            issues = response ?? [];
 
             foreach (Issue issue in issues)
             {
@@ -126,7 +125,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
     {
         List<MinimalRepository> repositories = await _gitHubRepositoriesUtil.GetAllForOwner(owner, startAt, endAt, cancellationToken).NoSync();
 
-        if (!repositories.Any())
+        if (repositories.Count == 0)
             return;
 
         GitHubOpenApiClient client = await _gitHubClientUtil.Get(cancellationToken).NoSync();
@@ -150,7 +149,7 @@ public sealed class GitHubRepositoriesIssuesUtil : IGitHubRepositoriesIssuesUtil
                     }, cancellationToken)
                     .NoSync();
 
-                issues = response?.ToList() ?? [];
+                issues = response ?? [];
 
                 foreach (Issue issue in issues)
                 {
